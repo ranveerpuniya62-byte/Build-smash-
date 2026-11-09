@@ -11,11 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Open project file
-        run: |
-          unzip -q candysmash.dat -d project
-          ls -A project
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -35,12 +30,12 @@ jobs:
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
             echo "KEYSTORE_FILE=$RUNNER_TEMP/upload-keystore.jks" >> "$GITHUB_ENV"
+            echo "Signing key found."
           else
             echo "No signing key set: release AAB will be unsigned."
           fi
 
       - name: Build debug APK and release AAB
-        working-directory: project
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -51,10 +46,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CandySmash-test-apk
-          path: project/app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/*.apk
 
       - name: Upload release AAB (real ads, for Play Console)
         uses: actions/upload-artifact@v4
         with:
           name: CandySmash-release-aab
-          path: project/app/build/outputs/bundle/release/*.aab
+          path: app/build/outputs/bundle/release/*.aab
