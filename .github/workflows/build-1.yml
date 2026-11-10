@@ -11,6 +11,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Find Gradle project folder
+        id: proj
+        run: |
+          f=$(find . -maxdepth 3 -name 'settings.gradle*' -not -path './.git/*' | head -n1)
+          if [ -z "$f" ]; then
+            echo "settings.gradle NOT FOUND. Files in repo:"
+            find . -maxdepth 3 -not -path './.git/*' | head -80
+            exit 1
+          fi
+          d=$(dirname "$f")
+          echo "Gradle project folder: $d"
+          echo "dir=$d" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -36,6 +49,7 @@ jobs:
           fi
 
       - name: Build debug APK and release AAB
+        working-directory: ${{ steps.proj.outputs.dir }}
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -46,10 +60,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CandySmash-test-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: ${{ steps.proj.outputs.dir }}/app/build/outputs/apk/debug/*.apk
 
       - name: Upload release AAB (real ads, for Play Console)
         uses: actions/upload-artifact@v4
         with:
           name: CandySmash-release-aab
-          path: app/build/outputs/bundle/release/*.aab
+          path: ${{ steps.proj.outputs.dir }}/app/build/outputs/bundle/release/*.aab
