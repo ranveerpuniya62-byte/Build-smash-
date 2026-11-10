@@ -11,13 +11,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract project from candysmash.dat
+        run: |
+          if [ -f candysmash.dat ]; then
+            mkdir -p project
+            unzip -q -o candysmash.dat -d project
+            echo "Extracted candysmash.dat"
+          fi
+
       - name: Find Gradle project folder
         id: proj
         run: |
-          f=$(find . -maxdepth 3 -name 'settings.gradle*' -not -path './.git/*' | head -n1)
+          f=$(find . -maxdepth 4 -name 'settings.gradle*' -not -path './.git/*' | head -n1)
           if [ -z "$f" ]; then
             echo "settings.gradle NOT FOUND. Files in repo:"
-            find . -maxdepth 3 -not -path './.git/*' | head -80
+            find . -maxdepth 4 -not -path './.git/*' | head -80
             exit 1
           fi
           d=$(dirname "$f")
